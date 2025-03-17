@@ -1,35 +1,19 @@
 services:
-  db:
-    image: postgres:14
-    container_name: database
-    restart: always
-    env_file:
-      - .env
-    networks:
-      internal:
-      external:
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    ports:
-      - "${POSTGRES_PORT}:5432"
-
   bot:
-    image: neimes/cian_scraper:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: cian_scraper
-    restart: always
-    depends_on:
-      - db
+    restart: no
     env_file:
       - .env
+    volumes:
+      - ./:/db
     networks:
-      - internal
-
-volumes:
-  postgres_data:
-
+      - external
+    environment:
+      - PYTHONPATH=/app
+  
 networks:
-  internal:
-    driver: bridge
-    internal: true
   external:
     driver: bridge

@@ -6,6 +6,4 @@ COPY . /app
 
 RUN ["uv", "sync", "--no-dev"]
 
-ENV PYTHONPATH="/app"
-
 CMD ["uv", "run", "--color", "auto", "--no-cache", "main.py" ]

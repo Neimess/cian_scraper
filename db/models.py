@@ -31,7 +31,7 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    tg_id = Column(String(50), unique=True)
+    tg_id = Column(Integer, unique=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(
         DateTime,
