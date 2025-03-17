@@ -27,6 +27,7 @@ dev = [
     "pytest-cov>=6.0.0",
     "pytest-forked>=1.6.0",
     "pytest-randomly>=3.16.0",
+    "ruff>=0.11.0",
 ]
 
 [tool.pytest.ini_options]

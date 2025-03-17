@@ -8,4 +8,4 @@ RUN ["uv", "sync", "--no-dev"]
 
 ENV PYTHONPATH="/app"
 
-CMD ["uv", "run", "main.py"]
+CMD ["uv", "run", "--color", "auto", "--no-cache", "main.py" ]
