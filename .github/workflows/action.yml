@@ -126,16 +126,18 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i key.pem $SERVER_USER@$SERVER_HOST << 'EOF'
             set -e
 
+            curl -O https://raw.githubusercontent.com/Neimess/cian_scraper/main/docker-compose.yml
+            
             cd $HOME/cian_scraper
 
             echo "Pulling latest images..."
-            docker-compose pull
+            docker compose pull
 
             echo "Stopping old containers..."
-            docker-compose down
+            docker compose down
 
             echo "Starting new containers..."
-            docker-compose up -d --force-recreate
+            docker compose up -d --force-recreate
 
             echo "Deployment successful!"
           EOF
