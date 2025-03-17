@@ -1,0 +1,69 @@
+
+__pycache__/
+*.py[cod]
+*$py.class
+
+
+*.so
+
+
+.Python
+MANIFEST
+
+
+htmlcov/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+
+*.mo
+
+
+instance/
+.webassets-cache
+
+docs/_build/
+
+__pypackages__/
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# PyCharm
+.idea/
+.DS_Store
+
+# VsCode
+.vscode/
+
+# Local configs
+local.ini
+local.json
+
+# Logs
+*.log
+
+# Database
+*.db

@@ -1,0 +1,25 @@
+name: Common Steps
+inputs:
+  python-version:
+    description: "Python version"
+    required: false
+runs:
+  using: "composite"
+  steps:
+    - name: Install uv
+      uses: astral-sh/setup-uv@v3
+      with:
+        enable-cache: true
+        cache-dependency-glob: "uv.lock"
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version-file: ".python-version"
+    
+    - name: Install Dependencies
+      run: |
+        uv sync --dev
+        uv sync
+        echo -e "\033[32mDependencies installed successfully\033[0m"
+        echo "PYTHONPATH=$PWD" >> $GITHUB_ENV
+      shell: bash
