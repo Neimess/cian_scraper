@@ -48,8 +48,8 @@ async def process_settings_callback(callback: types.CallbackQuery):
             parts = data.split("_")
             min_price = int(parts[2])
             max_price = None if parts[3] == "None" else int(parts[3])
-            await update_user_config(db, user_id, "min_price", min_price)
-            await update_user_config(db, user_id, "max_price", max_price)
+            await update_user_config(db, user_id, "minprice", min_price)
+            await update_user_config(db, user_id, "maxprice", max_price)
             await callback.answer("✅ Ценовой диапазон обновлен!")
             await callback.message.edit_text("Настройте параметры поиска:", reply_markup=get_settings_keyboard())
 
