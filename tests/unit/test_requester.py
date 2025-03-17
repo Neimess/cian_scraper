@@ -24,7 +24,7 @@ def fake_get_exception(url, headers, timeout, allow_redirects):
 @pytest.mark.asyncio
 async def test_fetch_exception(monkeypatch):
     monkeypatch.setattr(requests, "get", fake_get_exception)
-    req = Requester("http://exception.com", freeze_time=0)
+    req = Requester("http://exceptionsTest.com", freeze_time=0)
     text, status, headers = await req.fetch()
     assert text == ""
     assert status == 500
