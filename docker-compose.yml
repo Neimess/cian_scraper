@@ -1,26 +1,35 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:14
+    container_name: database
     restart: always
-    container_name: cian_db
-    ports:
-      - "${POSTGRES_PORT}:5432"
     env_file:
       - .env
+    networks:
+      internal:
+      external:
     volumes:
       - postgres_data:/var/lib/postgresql/data
-  
+    ports:
+      - "${POSTGRES_PORT}:5432"
+
   bot:
     image: neimes/cian_scraper:latest
-    restart: always
     container_name: cian_scraper
+    restart: always
     depends_on:
       - db
     env_file:
       - .env
-    
+    networks:
+      - internal
+
 volumes:
-  postgres_data:  
-  
+  postgres_data:
+
+networks:
+  internal:
+    driver: bridge
+    internal: true
+  external:
+    driver: bridge

@@ -13,22 +13,22 @@ dependencies = [
     "lxml>=5.3.1",
     "psycopg2-binary>=2.9.10",
     "pydantic-settings>=2.8.1",
-    "requests[socks]>=2.32.3",
+    "requests>=2.32.3",
     "sqlalchemy>=2.0.39",
     "uvloop>=0.21.0",
 ]
 
-[tool.uv]
-dev-dependencies = [
+[project.optional-dependencies]
+dev = [
     "aiosqlite>=0.21.0",
-    "pytest-randomly>=3.16.0",
-    "pytest-cov>=4.1.0",
-    "pytest>=8.3.3",
-    "pytest-forked>=1.6.0",
-    "ruff>=0.7.4",
-    "mypy",
+    "mypy>=1.15.0",
+    "pytest>=8.3.5",
     "pytest-asyncio>=0.25.3",
+    "pytest-cov>=6.0.0",
+    "pytest-forked>=1.6.0",
+    "pytest-randomly>=3.16.0",
 ]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 xfail_strict = true
@@ -84,3 +84,4 @@ disallow_untyped_defs = true
 warn_unused_ignores = true
 warn_return_any = true
 files = "src/**/*.py"
+
