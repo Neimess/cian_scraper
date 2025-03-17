@@ -61,7 +61,7 @@ def test_create_duplicate_apartment_url(test_db):
 
 def test_create_userconfig_without_user(test_db):
     test_db.rollback()
-    user_config = UserConfig(deal_type="sale", min_price=50000, max_price=200000)
+    user_config = UserConfig(deal_type="sale", minprice=50000, maxprice=200000)
 
     test_db.add(user_config)
     with pytest.raises(exc.IntegrityError):
