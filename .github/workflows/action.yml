@@ -125,10 +125,12 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no -i key.pem $SERVER_USER@$SERVER_HOST << 'EOF'
             set -e
-
-            curl -O https://raw.githubusercontent.com/Neimess/cian_scraper/main/docker-compose.yml
+            
+            mkdir -p $HOME/cian_scraper
             
             cd $HOME/cian_scraper
+
+            curl -o docker-compose.yml https://raw.githubusercontent.com/Neimess/cian_scraper/main/docker-compose.yml
 
             echo "Pulling latest images..."
             docker compose pull

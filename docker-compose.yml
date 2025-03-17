@@ -1,8 +1,6 @@
 services:
   bot:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: neimes/cian_scraper:latest
     container_name: cian_scraper
     restart: no
     env_file:
