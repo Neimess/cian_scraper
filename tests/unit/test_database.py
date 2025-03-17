@@ -21,14 +21,14 @@ def test_db():
 
 
 def test_create_user(test_db):
-    test_db.rollback()  # Очистка возможных прошлых ошибок
+    test_db.rollback()
     user = User(tg_id="12345", created_at=datetime.now(timezone.utc), updated_at=datetime.now(timezone.utc))
     test_db.add(user)
     test_db.commit()
 
     saved_user = test_db.query(User).filter_by(tg_id="12345").first()
     assert saved_user is not None
-    assert saved_user.tg_id == "12345"
+    assert saved_user.tg_id == 12345
 
 
 def test_create_duplicate_user(test_db):
