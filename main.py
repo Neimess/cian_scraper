@@ -2,7 +2,7 @@ import asyncio
 import argparse
 import db.database as db
 from src.bot.bot import TelegramBot
-from src.utils.loggers import logger
+from src.loggers import logger
 import uvloop
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy()) 

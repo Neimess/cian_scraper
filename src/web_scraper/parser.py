@@ -4,7 +4,7 @@ from typing import Dict, Optional
 
 from bs4 import BeautifulSoup
 
-from src.utils import logger
+from src.loggers import logger
 
 
 class ListingParser:

@@ -6,7 +6,7 @@ from aiogram.exceptions import TelegramAPIError, TelegramRetryAfter
 from aiogram.filters import Command
 
 from configs.config import settings
-from src.utils import logger
+from src.loggers import logger
 from src.web_scraper.scraper import CianScraper
 
 from .handlers import cancel, open_settings, process_settings_callback
@@ -22,6 +22,7 @@ class TelegramBot:
 
         self.dp.message.register(start_handler, Command("start", "help"))
         self.dp.message.register(menu_handler, Command("menu"))
+        self.dp.message.register(self.status_handler, Command("status"))
         self.dp.message.register(self.handle_search, Command("search"))
         self.dp.message.register(self.handle_stop, Command("stop"))
 
@@ -123,6 +124,14 @@ class TelegramBot:
                     break
 
         logger.info(f"All notifications sent to user {user_id} for {len(listings)}")
+
+    @error_handler
+    async def status_handler(self, message: types.Message):
+        user_id = message.chat.id
+        if user_id in self.user_tasks and not self.user_tasks[user_id].done():
+            await message.answer("🔄 Поиск активен.")
+        else:
+            await message.answer("🛑 Поиск не запущен.")
 
     @error_handler
     async def _run_scraper(self, scraper: CianScraper):

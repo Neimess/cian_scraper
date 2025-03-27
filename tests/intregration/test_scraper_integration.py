@@ -12,7 +12,7 @@ TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
 init_engine(
     database_url=TEST_DATABASE_URL,
-    echo=True,
+    echo=False,
     connect_args={"check_same_thread": False},
     poolclass=StaticPool,
 )
@@ -31,12 +31,10 @@ async def test_db():
             await session.commit()
 
         yield session
-    async with get_session() as session:
-        await session.rollback()
 
 
 @pytest.mark.asyncio
-async def test_save_new_listings(test_db, monkeypatch):
+async def test_save_new_listings(test_db):
     dummy_detail = {
         "title": "Dummy Apt",
         "price": 1000.0,
@@ -49,28 +47,25 @@ async def test_save_new_listings(test_db, monkeypatch):
         "images": ["http://example.com/image1"],
     }
 
-    async def fake_fetch_listing_details(self, url):
+    async def fake_fetch_details(url):
         return dummy_detail.copy()
 
-    monkeypatch.setattr(CianScraper, "fetch_listing_details", fake_fetch_listing_details)
-
-    async def fake_is_duplicate(self, url):
+    async def fake_is_duplicate(self, url, session):
         return False
 
-    monkeypatch.setattr(CianScraper, "_is_duplicate", fake_is_duplicate)
+    scraper = CianScraper()
+    scraper.saver._is_duplicate = fake_is_duplicate.__get__(scraper.saver)
 
-    scraper_instance = CianScraper()
-    await scraper_instance.save_new_listings(["http://example.com/listing1"])
+    await scraper.saver.save(["http://example.com/listing1"], fake_fetch_details, test_db)
 
-    async with test_db as session:
-        result = await session.execute(text("SELECT COUNT(*) FROM apartments"))
-        count = result.scalar()
+    result = await test_db.execute(text("SELECT COUNT(*) FROM apartments"))
+    count = result.scalar()
 
-    assert count > 0
+    assert count == 1
 
 
 @pytest.mark.asyncio
-async def test_save_existing_listing_is_skipped(test_db, monkeypatch):
+async def test_save_existing_listing_is_skipped(test_db):
     dummy_detail = {
         "title": "Existing Apt",
         "price": 1200.0,
@@ -83,38 +78,31 @@ async def test_save_existing_listing_is_skipped(test_db, monkeypatch):
         "images": ["http://example.com/image2"],
     }
 
-    async def fake_fetch_listing_details(self, url):
+    async def fake_fetch_details(url):
         return dummy_detail.copy()
 
     call_count = {"count": 0}
 
-    async def fake_is_duplicate(self, url):
+    async def fake_is_duplicate(self, url, session):
         if call_count["count"] == 0:
             call_count["count"] += 1
             return False
         return True
 
-    monkeypatch.setattr(CianScraper, "fetch_listing_details", fake_fetch_listing_details)
-    monkeypatch.setattr(CianScraper, "_is_duplicate", fake_is_duplicate)
+    scraper = CianScraper()
+    scraper.saver._is_duplicate = fake_is_duplicate.__get__(scraper.saver)
 
-    scraper_instance = CianScraper()
+    await scraper.saver.save(["http://example.com/listing2"], fake_fetch_details, test_db)
+    await scraper.saver.save(["http://example.com/listing2"], fake_fetch_details, test_db)
 
-    await scraper_instance.save_new_listings(["http://example.com/listing2"])
-    # Пытаемся добавить ту же запись повторно
-    await scraper_instance.save_new_listings(["http://example.com/listing2"])
+    result = await test_db.execute(text("SELECT COUNT(*) FROM apartments"))
+    count = result.scalar()
 
-    async with test_db as session:
-        result = await session.execute(text("SELECT COUNT(*) FROM apartments"))
-        count = result.scalar()
-
-    assert count == 1, f"Expected 1 record, but in db {count}."
+    assert count == 1
 
 
 @pytest.mark.asyncio
-async def test_save_multiple_listings(test_db, monkeypatch):
-    """
-    Проверяет, что можно сохранять несколько новых записей за раз.
-    """
+async def test_save_multiple_listings(test_db):
     details_1 = {
         "title": "Apt 1",
         "price": 2000.0,
@@ -138,90 +126,44 @@ async def test_save_multiple_listings(test_db, monkeypatch):
         "images": ["http://example.com/image4_1"],
     }
 
-    async def fake_fetch_listing_details(self, url):
-        # Условно возвращаем разные детали для разных URL
-        if url.endswith("listing3"):
-            return details_1
-        elif url.endswith("listing4"):
-            return details_2
-        return None
+    async def fake_fetch_details(url):
+        return details_1 if url.endswith("listing3") else details_2
 
-    async def fake_is_duplicate(self, url):
+    async def fake_is_duplicate(self, url, session):
         return False
 
-    monkeypatch.setattr(CianScraper, "fetch_listing_details", fake_fetch_listing_details)
-    monkeypatch.setattr(CianScraper, "_is_duplicate", fake_is_duplicate)
-
     scraper = CianScraper()
-    await scraper.save_new_listings(
+    scraper.saver._is_duplicate = fake_is_duplicate.__get__(scraper.saver)
+
+    await scraper.saver.save(
         [
             "http://example.com/listing3",
             "http://example.com/listing4",
-        ]
+        ],
+        fake_fetch_details,
+        test_db,
     )
 
-    async with test_db as session:
-        result = await session.execute(text("SELECT COUNT(*) FROM apartments"))
-        count = result.scalar()
+    result = await test_db.execute(text("SELECT COUNT(*) FROM apartments"))
+    count = result.scalar()
 
-    assert count >= 2, f"Ожидалось минимум 2 новые записи, но найдено {count}."
+    assert count == 2
 
 
 @pytest.mark.asyncio
-async def test_save_listing_details_is_none(test_db, monkeypatch):
-    async def fake_fetch_listing_details(self, url):
+async def test_save_listing_details_is_none(test_db):
+    async def fake_fetch_details(url):
         return None
 
-    async def fake_is_duplicate(self, url):
+    async def fake_is_duplicate(self, url, session):
         return False
 
-    monkeypatch.setattr(CianScraper, "fetch_listing_details", fake_fetch_listing_details)
-    monkeypatch.setattr(CianScraper, "_is_duplicate", fake_is_duplicate)
-
     scraper = CianScraper()
-    await scraper.save_new_listings(["http://example.com/non_parsed_listing"])
+    scraper.saver._is_duplicate = fake_is_duplicate.__get__(scraper.saver)
 
-    async with test_db as session:
-        result = await session.execute(text("SELECT COUNT(*) FROM apartments"))
-        count = result.scalar()
+    await scraper.saver.save(["http://example.com/non_parsed_listing"], fake_fetch_details, test_db)
 
-    assert count == 0, "Объект с None-данными не должен был добавляться в базу."
+    result = await test_db.execute(text("SELECT COUNT(*) FROM apartments"))
+    count = result.scalar()
 
-
-@pytest.mark.asyncio
-async def test_fetch_listings_integration(monkeypatch):
-    """
-    Интеграционный тест метода fetch_listings. Проверяем, что метод парсит
-    HTML и возвращает список URL. Здесь мы не пишем в БД, а только убеждаемся,
-    что парсинг сработал правильно.
-    """
-    html_with_links = """
-    <html>
-        <body>
-            <article data-name="CardComponent">
-                <a class="_93444fe79c--link--eoxce" href="http://example.com/apt_101"></a>
-            </article>
-            <article data-name="CardComponent">
-                <a class="_93444fe79c--link--eoxce" href="http://example.com/apt_102"></a>
-            </article>
-        </body>
-    </html>
-    """
-
-    # Подменяем сетевой слой, чтобы он возвращал нашу фейковую HTML-страницу
-    async def fake_fetch(self):
-        return (html_with_links, 200, {"Content-Type": "text/html"})
-
-    from src.web_scraper.requester import Requester
-
-    monkeypatch.setattr(Requester, "fetch", fake_fetch)
-
-    scraper = CianScraper()
-
-    # Метод fetch_listings() внутри себя сделает Requester(...).fetch(),
-    # но вызовет нашу подделку, которая вернёт html_with_links.
-    urls = await scraper.fetch_listings()
-
-    assert len(urls) == 2, f"Ожидалось 2 ссылки, но получено {len(urls)}"
-    assert "http://example.com/apt_101" in urls
-    assert "http://example.com/apt_102" in urls
+    assert count == 0

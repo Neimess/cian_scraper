@@ -6,7 +6,8 @@ from aiogram import types
 from db.crud.manager_users import get_or_create_user, get_user_config
 from db.database import database
 from src.bot.keyboards.settings_keyboards import get_main_menu
-from src.utils import error_handler, log, notify_listings_handler, to_dict
+from src.loggers import log
+from src.utils import error_handler, notify_listings_handler, to_dict
 from src.web_scraper.scraper import CianScraper
 
 

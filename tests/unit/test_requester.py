@@ -3,7 +3,7 @@ from urllib.parse import urlencode
 import pytest
 import requests
 
-from src.web_scraper.requester import USER_AGENTS, Requester
+from src.web_scraper.requester import USER_AGENTS, RequesterMode, create_requester
 
 
 class FakeResponse:
@@ -24,7 +24,7 @@ def fake_get_exception(url, headers, timeout, allow_redirects):
 @pytest.mark.asyncio
 async def test_fetch_exception(monkeypatch):
     monkeypatch.setattr(requests, "get", fake_get_exception)
-    req = Requester("http://exceptionsTest.com", freeze_time=0)
+    req = create_requester("http://exceptionsTest.com", freeze_time=0, mode=RequesterMode.Sync)
     text, status, headers = await req.fetch()
     assert text == ""
     assert status == 500
@@ -33,13 +33,13 @@ async def test_fetch_exception(monkeypatch):
 
 def test_url_construction_with_params():
     params = {"a": "1", "b": "2"}
-    req = Requester("http://example.com/", params=params)
+    req = create_requester("http://example.com/", params=params, mode=RequesterMode.Sync)
     expected_query = urlencode(params)
     assert "cat.php" in req.url
     assert expected_query in req.url
 
 
 def test_headers_contains_user_agent():
-    req = Requester("http://example.com")
+    req = create_requester("http://example.com", mode=RequesterMode.Sync)
     user_agent = req.headers.get("User-Agent")
     assert user_agent in USER_AGENTS

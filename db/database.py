@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sess
 from contextlib import asynccontextmanager
 from db.models import Base
 from configs.config import settings
-from src.utils import logger, log
+from src.loggers import logger, log
 
 
 engine = None
