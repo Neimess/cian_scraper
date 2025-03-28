@@ -1,3 +1,4 @@
+import asyncio
 from typing import Awaitable, Callable, Dict, List
 
 from sqlalchemy import func, select
@@ -14,8 +15,9 @@ class ListingSaver:
         urls: List[str],
         fetch_details_fn: Callable[[str], Awaitable[Dict]],
         session: AsyncSession,
+        concurrency_limit: int = 3,
     ) -> None:
-        new_data = await self._collect_new_data(urls, fetch_details_fn, session)
+        new_data = await self._collect_new_data(urls, fetch_details_fn, session, concurrency_limit)
         if not new_data:
             logger.info("No new listings to save.")
             return
@@ -26,15 +28,29 @@ class ListingSaver:
         urls: List[str],
         fetch_details_fn: Callable[[str], Awaitable[Dict]],
         session: AsyncSession,
+        concurrency_limit: int = 3,
     ) -> List[Dict]:
+        semaphore = asyncio.Semaphore(concurrency_limit)
+        existing_urls = await self.get_existing_urls(session)
+
+        async def process_url(url: str) -> Dict[str, str] | None:
+            async with semaphore:
+                if url in existing_urls:
+                    logger.debug(f"Duplicate listing found: {url}")
+                    return None
+                details = await fetch_details_fn(url)
+                return details if details else None
+
+        tasks = [process_url(url) for url in urls]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
         new_data = []
-        for url in urls:
-            if await self._is_duplicate(url, session):
-                logger.debug(f"Duplicate listing found: {url}")
-                continue
-            details = await fetch_details_fn(url)
-            if details:
-                new_data.append(details)
+        for result in results:
+            if isinstance(result, dict):
+                new_data.append(result)
+            elif isinstance(result, Exception):
+                logger.warning(f"Error in parallel processing: {result}")
+
         return new_data
 
     async def _commit_data(self, listings: List[Dict], session: AsyncSession) -> None:
@@ -51,7 +67,7 @@ class ListingSaver:
                     url=det.get("url"),
                 )
                 session.add(listing)
-                await session.flush()  # получаем ID listing
+                await session.flush()
 
                 images = det.get("images")
                 if isinstance(images, list):
@@ -60,10 +76,6 @@ class ListingSaver:
                 logger.exception(f"Failed to save listing {det.get('url')}: {e}")
 
         await session.commit()
-
-    async def _is_duplicate(self, url: str, session: AsyncSession) -> bool:
-        result = await session.execute(select(Apartment).filter_by(url=url))
-        return result.scalars().first() is not None
 
     @staticmethod
     async def get_recent_listings(session: AsyncSession, limit: int) -> List[Dict[str, str]]:
@@ -86,3 +98,8 @@ class ListingSaver:
     async def get_data_size(session: AsyncSession) -> int:
         result = await session.execute(select(func.count()).select_from(Apartment))
         return result.scalar() or 0
+
+    @staticmethod
+    async def get_existing_urls(session: AsyncSession) -> set[str]:
+        result = await session.execute(select(Apartment.url))
+        return set(result.scalars().all())

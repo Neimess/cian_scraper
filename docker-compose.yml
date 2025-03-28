@@ -10,7 +10,11 @@ services:
     networks:
       - external
     environment:
-      - PYTHONPATH=/app
+      - PYTHONPATH=${PYTHONPATH}
+      - DATABASE_URL=${DATABASE_URL}
+      - LOGGER_MODE=${LOGGER_MODE}
+      - TELEGRAM_API_KEY=${TELEGRAM_API_KEY}
+      - TELEGRAM_ADMIN_ID=${TELEGRAM_ADMIN_ID}
   
 networks:
   external:

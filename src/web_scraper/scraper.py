@@ -87,7 +87,7 @@ class CianScraper:
     async def save_new_listings(self, urls: List[str]) -> None:
         logger.info("SAVING DATA")
         async with database() as db_session:
-            await self.saver.save(urls, self.fetch_listing_details, db_session)
+            await self.saver.save(urls, self.fetch_listing_details, db_session, concurrency_limit=3)
 
     async def run(self) -> None:
         self.is_running = True
