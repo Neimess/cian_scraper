@@ -66,19 +66,10 @@ PROXIES=http://proxy1:port,http://proxy2:port
 ---
 
 ## 🏃 Запуск проекта
-
-### 🕵️ Запуск скрейпера
-
 ```bash
-python src/web_scraper/scraper.py
+export PYTHONPATH="$PWD"
+python main.py
 ```
-
-### 🤖 Запуск бота
-
-```bash
-python src/bot/bot.py
-```
-
 ---
 
 ## ✅ Тестирование

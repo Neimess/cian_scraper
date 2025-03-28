@@ -2,20 +2,12 @@ services:
   bot:
     image: neimes/cian_scraper:latest
     container_name: cian_scraper
-    restart: no
-    env_file:
-      - .env
+    restart: unless-stopped
     volumes:
       - ./:/db
-    networks:
-      - external
     environment:
       - PYTHONPATH=${PYTHONPATH}
       - DATABASE_URL=${DATABASE_URL}
       - LOGGER_MODE=${LOGGER_MODE}
       - TELEGRAM_API_KEY=${TELEGRAM_API_KEY}
       - TELEGRAM_ADMIN_ID=${TELEGRAM_ADMIN_ID}
-  
-networks:
-  external:
-    driver: bridge
